@@ -69,3 +69,5 @@ Jenkins setup:
 - Configure SMTP under Manage Jenkins -> System for email notifications.
 - Create a Pipeline job using "Pipeline script from SCM" pointing at this repo.
 - GitHub webhook payload URL: `<ngrok-url>/github-webhook/` (content type `application/json`).
+
+Pipeline: every push to main triggers Jenkins via a GitHub webhook (through ngrok).
