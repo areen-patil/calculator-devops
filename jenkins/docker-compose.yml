@@ -1,0 +1,33 @@
+name: ci
+
+services:
+  jenkins:
+    build: .
+    image: calculator-jenkins:latest
+    container_name: jenkins
+    restart: unless-stopped
+    # root so the container can use the mounted Docker socket on any host OS
+    user: root
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # Public tunnel so GitHub webhooks can reach Jenkins.
+  # Start with: docker compose --profile tunnel up -d
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    profiles: ["tunnel"]
+    restart: unless-stopped
+    command: ["http", "jenkins:8080"]
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"   # ngrok inspector: shows the public URL
+    depends_on:
+      - jenkins
+
+volumes:
+  jenkins_home:
