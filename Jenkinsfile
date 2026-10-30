@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'your-dockerhub-username'   // TODO: set
-        NOTIFY_EMAIL   = 'your-email@example.com'    // TODO: set
+        DOCKERHUB_USER = 'areenpatil'
+        NOTIFY_EMAIL   = 'areenjadhavpatiil@gmail.com' 
         IMAGE_NAME     = "${DOCKERHUB_USER}/calculator-api"
         IMAGE          = "${IMAGE_NAME}:${BUILD_NUMBER}"
     }
