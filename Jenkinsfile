@@ -26,13 +26,13 @@ pipeline {
 
         stage('Build') {
             steps {
-                bat 'mvn -B clean package -DskipTests'
+                sh 'mvn -B clean package -DskipTests'
             }
         }
 
         stage('Test') {
             steps {
-                bat 'mvn -B test'
+                sh 'mvn -B test'
             }
             post {
                 always {
@@ -43,7 +43,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                bat "docker build -t %IMAGE% -t %IMAGE_NAME%:latest ."
+                sh 'docker build -t "$IMAGE" -t "$IMAGE_NAME:latest" .'
             }
         }
 
@@ -52,34 +52,24 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
                                                   usernameVariable: 'DH_USER',
                                                   passwordVariable: 'DH_PASS')]) {
-                    bat 'echo %DH_PASS%| docker login -u %DH_USER% --password-stdin'
-                    bat "docker push %IMAGE%"
-                    bat "docker push %IMAGE_NAME%:latest"
+                    sh 'echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin'
+                    sh 'docker push "$IMAGE"'
+                    sh 'docker push "$IMAGE_NAME:latest"'
                 }
             }
             post {
                 always {
-                    bat 'docker logout'
+                    sh 'docker logout'
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                // up -d is idempotent: unchanged services are left running
-                bat 'docker compose up -d --remove-orphans'
-                powershell '''
-                    $ok = $false
-                    for ($i = 1; $i -le 20; $i++) {
-                        try {
-                            $r = Invoke-RestMethod -Uri http://localhost:8081/actuator/health -TimeoutSec 5
-                            if ($r.status -eq 'UP') { $ok = $true; break }
-                        } catch {}
-                        Start-Sleep -Seconds 3
-                    }
-                    if (-not $ok) { Write-Error 'Health check failed'; exit 1 }
-                    Write-Output 'Deployment healthy'
-                '''
+                // up -d is idempotent: unchanged services are left running.
+                // --wait blocks until every service reports healthy, and fails otherwise.
+                sh 'docker compose up -d --build --remove-orphans --wait --wait-timeout 120'
+                sh 'docker compose ps'
             }
         }
     }
