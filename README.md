@@ -53,13 +53,13 @@ The Jenkins container uses the host's Docker daemon through the mounted socket (
 ```
 cd jenkins
 cp .env.example .env            # put your NGROK_AUTHTOKEN in .env
-docker compose up -d --build    # Jenkins on http://localhost:8080
+docker compose up -d --build    # Jenkins on http://localhost:8090
 docker compose --profile tunnel up -d   # optional: public URL via ngrok
 ```
 
 - First login password: `docker compose logs jenkins` (or `docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword`).
 - The ngrok public URL is shown at http://localhost:4040.
-- Port 8080 must be free, so stop any Jenkins already installed on the host.
+- Jenkins is published on host port 8090 (8080 is often taken, e.g. by backup agents); inside the container it still listens on 8080, so the ngrok tunnel is unaffected. Set Manage Jenkins -> System -> Jenkins URL to `http://localhost:8090/` so links in notification emails open correctly.
 
 The `Jenkinsfile` defines these stages: Checkout, Build, Test, Docker Build, Push, Deploy. It is triggered by a GitHub webhook.
 
